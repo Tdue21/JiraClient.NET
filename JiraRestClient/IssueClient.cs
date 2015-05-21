@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 
@@ -17,14 +18,24 @@ namespace JiraRestClient
 
         public Issue GetIssueByKey(string key)
         {
-            Uri url = new Uri(baseUri, RestPathConstants.ISSUE);
-            Uri final = UriHelper.AddIssueKey(url, key);
-            using (Stream s = client.GetStreamAsync(final).Result)
-            using (StreamReader sr = new StreamReader(s))
-            using (JsonReader reader = new JsonTextReader(sr))
+            try
             {
-                return serializer.Deserialize<Issue>(reader);
-            }            
+                Uri url = new Uri(baseUri, RestPathConstants.ISSUE);
+                Uri final = UriHelper.AddIssueKey(url, key);
+                using (Stream s = client.GetStreamAsync(final).Result)
+                using (StreamReader sr = new StreamReader(s))
+                using (JsonReader reader = new JsonTextReader(sr))
+                {
+                    return serializer.Deserialize<Issue>(reader);
+                }
+            }
+            catch(HttpRequestException e)
+            {
+                Debug.WriteLine(e.StackTrace);
+                return null;
+            }
+
+               
         }
 
         public Issue GetIssueByKey(string key, List<string> fields, List<string> expand)
